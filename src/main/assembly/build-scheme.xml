@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<assembly  xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'
+   xmlns='http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2'
+   xsi:schemaLocation='http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2 http://maven.apache.org/xsd/assembly-1.1.2.xsd'>
+
+     <id>distr</id>
+     <formats>
+          <format>zip</format>
+     </formats>
+     <includeBaseDirectory>false</includeBaseDirectory>
+     <fileSets>
+          <fileSet>
+               <directory>${project.build.directory}</directory>
+               <includes>
+                    <include>*.jar</include>
+               </includes>
+               <outputDirectory>/jar</outputDirectory>
+          </fileSet>
+          <fileSet>
+               <directory>${project.basedir}/src/main/assembly</directory>
+               <outputDirectory>/</outputDirectory>
+               <includes>
+                  <include>shrink-pdf.*</include>
+               </includes>
+          </fileSet>
+     </fileSets>
+     <dependencySets>
+          <dependencySet>
+               <outputDirectory>/jar</outputDirectory>
+               <scope>compile</scope>
+               <useTransitiveDependencies>false</useTransitiveDependencies>
+               <includes>
+                    <include>org.apache.pdfbox:pdfbox</include>
+                    <include>org.apache.pdfbox:fontbox</include>
+                    <include>org.apache.pdfbox:jempbox</include>
+                    <include>commons-logging:commons-logging</include>
+               </includes>
+          </dependencySet>
+     </dependencySets>
+
+</assembly>

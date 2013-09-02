@@ -1,0 +1,11 @@
+﻿*.class
+*.jar
+.project
+.settings
+.metadata
+target
+*/.classpath
+*/.project
+*/.settings
+*/target
+catalog.xml
