@@ -4,7 +4,7 @@
 
   <groupId>edu.emory.cellbio</groupId>
   <artifactId>shrink-pdf</artifactId>
-  <version>beta-1</version>
+  <version>beta-2-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <name>The PDF Shrinker</name>
