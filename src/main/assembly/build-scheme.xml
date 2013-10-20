@@ -23,6 +23,22 @@
                   <include>shrink-pdf.*</include>
                </includes>
           </fileSet>
+          <fileSet>
+              <directory>${project.basedir}</directory>
+              <outputDirectory>/</outputDirectory>
+              <includes>
+                  <include>LICENSE</include>
+                  <include>README.md</include>
+              </includes>
+          </fileSet>
+          <fileSet>
+              <directory>${project.basedir}/src/main/assembly</directory>
+              <outputDirectory>/jar</outputDirectory>
+              <includes>
+                  <include>LICENSE*</include>
+                  <include>NOTICE*</include>
+              </includes>
+          </fileSet>
      </fileSets>
      <dependencySets>
           <dependencySet>
