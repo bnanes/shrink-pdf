@@ -3,7 +3,7 @@ The PDF Shrinker
 
 Reduce PDF file size by applying jpeg compression to all images embedded in the PDF.
 
-Project site: <http://userwww.service.emory.edu/~bnanes/shrink-pdf.html>
+Project site: <http://cellbio.emory.edu/bnanes/shrink-pdf.html>
 
 Release notes
 -------------
@@ -26,5 +26,5 @@ Uses [Apache PDFBox](http://pdfbox.apache.org/) to read, parse, and write PDF fi
 Contact
 -------
 
-**Benjamin Nanes**
-Web: <http://userwww.service.emory.edu/~bnanes/>
+**Benjamin Nanes**    
+<http://cellbio.emory.edu/bnanes/>
