@@ -1,1 +1,1 @@
-java -cp "jar/*" edu.emory.cellbio.ShrinkPDF
+javaw -cp "jar/*" edu.emory.cellbio.ShrinkPDF

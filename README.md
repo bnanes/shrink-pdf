@@ -8,6 +8,10 @@ Project site: <http://cellbio.emory.edu/bnanes/shrink-pdf.html>
 Release notes
 -------------
 
+### beta-3
+
+- Support for larger PDF documents
+
 ### beta-2
 
 - Support for command line arguments

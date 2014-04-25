@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -18,8 +19,10 @@ import javax.swing.JOptionPane;
 import org.apache.pdfbox.pdfparser.PDFParser;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.pdmodel.PDResources;
 import org.apache.pdfbox.pdmodel.graphics.xobject.PDJpeg;
 import org.apache.pdfbox.pdmodel.graphics.xobject.PDXObject;
+import org.apache.pdfbox.pdmodel.graphics.xobject.PDXObjectForm;
 import org.apache.pdfbox.pdmodel.graphics.xobject.PDXObjectImage;
 
 /**
@@ -230,35 +233,43 @@ public final class ShrinkPDF {
           final PDFParser parser = new PDFParser(fis);
           parser.parse();
           final PDDocument doc = parser.getPDDocument();
-          List pages = doc.getDocumentCatalog().getPages().getKids();
+          List pages = doc.getDocumentCatalog().getAllPages();
           for(Object p : pages) {
                if(!(p instanceof PDPage))
                     continue;
                PDPage page = (PDPage) p;
-               Map<String, PDXObject> xObs = page.getResources().getXObjects();
-               for(String k : xObs.keySet()) {
-                    final PDXObject xObj = xObs.get(k);
-                    if(!(xObj instanceof PDXObjectImage))
-                         continue;
-                    PDXObjectImage img = (PDXObjectImage) xObj;
-                    final Iterator<ImageWriter> jpgWriters = 
-                            ImageIO.getImageWritersByFormatName("jpeg");
-                    final ImageWriter jpgWriter = jpgWriters.next();
-                    final ImageWriteParam iwp = jpgWriter.getDefaultWriteParam();
-                    iwp.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
-                    iwp.setCompressionQuality(compQual);
-                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                    jpgWriter.setOutput(ImageIO.createImageOutputStream(baos));
-                    jpgWriter.write(null,
-                            new IIOImage(img.getRGBImage(), null, null), iwp);
-                    ByteArrayInputStream bais = 
-                            new ByteArrayInputStream(baos.toByteArray());
-                    PDJpeg jpg = new PDJpeg(doc, bais);
-                    xObs.put(k, jpg);
-               }
-               page.getResources().setXObjects(xObs);
+               scanResources(page.getResources(), doc);
           }
           return doc;
+     }
+     
+     private void scanResources(final PDResources rList, final PDDocument doc)
+           throws FileNotFoundException, IOException {
+         Map<String, PDXObject> xObs = rList.getXObjects();
+         for(String k : xObs.keySet()) {
+            final PDXObject xObj = xObs.get(k);
+            if(xObj instanceof PDXObjectForm)
+                 scanResources(((PDXObjectForm) xObj).getResources(), doc);
+            if(!(xObj instanceof PDXObjectImage))
+                 continue;
+            PDXObjectImage img = (PDXObjectImage) xObj;
+            System.out.println("Compressing image: " + k);
+            final Iterator<ImageWriter> jpgWriters = 
+                    ImageIO.getImageWritersByFormatName("jpeg");
+            final ImageWriter jpgWriter = jpgWriters.next();
+            final ImageWriteParam iwp = jpgWriter.getDefaultWriteParam();
+            iwp.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+            iwp.setCompressionQuality(compQual);
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            jpgWriter.setOutput(ImageIO.createImageOutputStream(baos));
+            jpgWriter.write(null,
+                    new IIOImage(img.getRGBImage(), null, null), iwp);
+            ByteArrayInputStream bais = 
+                    new ByteArrayInputStream(baos.toByteArray());
+            PDJpeg jpg = new PDJpeg(doc, bais);
+            xObs.put(k, jpg);
+         }
+         rList.setXObjects(xObs);
      }
      
      // -- Main methods --

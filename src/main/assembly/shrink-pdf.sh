@@ -1,1 +1,2 @@
-java -cp "jar/*" edu.emory.cellbio.ShrinkPDF
+#!/bin/bash
+javaw -cp "jar/*" edu.emory.cellbio.ShrinkPDF
