@@ -3,7 +3,7 @@ The PDF Shrinker
 
 Reduce PDF file size by applying jpeg compression to all images embedded in the PDF.
 
-Project site: <http://cellbio.emory.edu/bnanes/shrink-pdf.html>
+Project site: <http://b.nanes.org/shrink-pdf.html>
 
 Release notes
 -------------
@@ -31,4 +31,4 @@ Contact
 -------
 
 **Benjamin Nanes**    
-<http://cellbio.emory.edu/bnanes/>
+<http://b.nanes.org/>
