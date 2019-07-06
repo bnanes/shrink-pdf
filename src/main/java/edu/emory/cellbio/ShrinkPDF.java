@@ -3,27 +3,27 @@ package edu.emory.cellbio;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
 import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageWriteParam;
 import javax.imageio.ImageWriter;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+import org.apache.pdfbox.cos.COSName;
+import org.apache.pdfbox.io.RandomAccessBufferedFileInputStream;
 import org.apache.pdfbox.pdfparser.PDFParser;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.pdmodel.PDPageTree;
 import org.apache.pdfbox.pdmodel.PDResources;
-import org.apache.pdfbox.pdmodel.graphics.xobject.PDJpeg;
-import org.apache.pdfbox.pdmodel.graphics.xobject.PDXObject;
-import org.apache.pdfbox.pdmodel.graphics.xobject.PDXObjectForm;
-import org.apache.pdfbox.pdmodel.graphics.xobject.PDXObjectImage;
+import org.apache.pdfbox.pdmodel.graphics.PDXObject;
+import org.apache.pdfbox.pdmodel.graphics.form.PDFormXObject;
+import org.apache.pdfbox.pdmodel.graphics.image.JPEGFactory;
+import org.apache.pdfbox.pdmodel.graphics.image.LosslessFactory;
+import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 
 /**
  * App for shrinking PDF files by applying jpeg compression
@@ -39,6 +39,7 @@ public final class ShrinkPDF {
      private float compQual = -1;
      private static float compQualDefault = 0.85f;
      private boolean headless = false;
+     private boolean tiff = false;
      
      // -- Methods --
      
@@ -142,6 +143,13 @@ public final class ShrinkPDF {
          this.headless = headless;
      }
      
+     /**
+      * Set {@code true} to embed images as uncompressed TIFFs.
+      */
+     public void setTiff(final boolean tiff) {
+         this.tiff = tiff;
+     }
+     
      // -- Helper methods --
      
      /**
@@ -229,54 +237,69 @@ public final class ShrinkPDF {
              throws FileNotFoundException, IOException {
           if(compQual < 0)
               compQual = compQualDefault;
-          final FileInputStream fis = new FileInputStream(input);
-          final PDFParser parser = new PDFParser(fis);
+          final RandomAccessBufferedFileInputStream rabfis = 
+                  new RandomAccessBufferedFileInputStream(input);
+          final PDFParser parser = new PDFParser(rabfis);
           parser.parse();
           final PDDocument doc = parser.getPDDocument();
-          List pages = doc.getDocumentCatalog().getAllPages();
-          for(Object p : pages) {
-               if(!(p instanceof PDPage))
-                    continue;
-               PDPage page = (PDPage) p;
-               scanResources(page.getResources(), doc);
+          final PDPageTree pages = doc.getPages();
+          final ImageWriter imgWriter;
+          final ImageWriteParam iwp;
+          if(tiff) {
+              final Iterator<ImageWriter> tiffWriters =
+                    ImageIO.getImageWritersBySuffix("png");
+              imgWriter = tiffWriters.next();
+              iwp = imgWriter.getDefaultWriteParam();
+              //iwp.setCompressionMode(ImageWriteParam.MODE_DISABLED);
+          } else {
+              final Iterator<ImageWriter> jpgWriters = 
+                    ImageIO.getImageWritersByFormatName("jpeg");
+              imgWriter = jpgWriters.next();
+              iwp = imgWriter.getDefaultWriteParam();
+              iwp.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+              iwp.setCompressionQuality(compQual);
+          }
+          for(PDPage p : pages) {
+               scanResources(p.getResources(), doc, imgWriter, iwp);
           }
           return doc;
      }
      
-     private void scanResources(final PDResources rList, final PDDocument doc)
+     private void scanResources(
+           final PDResources rList,
+           final PDDocument doc,
+           final ImageWriter imgWriter,
+           final ImageWriteParam iwp)
            throws FileNotFoundException, IOException {
-         Map<String, PDXObject> xObs = rList.getXObjects();
-         for(String k : xObs.keySet()) {
-            final PDXObject xObj = xObs.get(k);
-            if(xObj instanceof PDXObjectForm)
-                 scanResources(((PDXObjectForm) xObj).getResources(), doc);
-            if(!(xObj instanceof PDXObjectImage))
+         Iterable<COSName> xNames = rList.getXObjectNames();
+         for(COSName xName : xNames) {
+            final PDXObject xObj = rList.getXObject(xName);
+            if(xObj instanceof PDFormXObject)
+                scanResources(((PDFormXObject)xObj).getResources(), doc, imgWriter, iwp);
+            if(!(xObj instanceof PDImageXObject))
                  continue;
-            PDXObjectImage img = (PDXObjectImage) xObj;
-            System.out.println("Compressing image: " + k);
-            final Iterator<ImageWriter> jpgWriters = 
-                    ImageIO.getImageWritersByFormatName("jpeg");
-            final ImageWriter jpgWriter = jpgWriters.next();
-            final ImageWriteParam iwp = jpgWriter.getDefaultWriteParam();
-            iwp.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
-            iwp.setCompressionQuality(compQual);
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            jpgWriter.setOutput(ImageIO.createImageOutputStream(baos));
-            jpgWriter.write(null,
-                    new IIOImage(img.getRGBImage(), null, null), iwp);
-            ByteArrayInputStream bais = 
-                    new ByteArrayInputStream(baos.toByteArray());
-            PDJpeg jpg = new PDJpeg(doc, bais);
-            xObs.put(k, jpg);
+            final PDImageXObject img = (PDImageXObject)xObj;
+            System.out.println("Compressing image: " + xName.getName());
+            final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            imgWriter.setOutput(ImageIO.createImageOutputStream(baos));
+            imgWriter.write(null,
+                    new IIOImage(img.getImage(), null, null), iwp);
+            final ByteArrayInputStream bais = 
+                    new ByteArrayInputStream(baos.toByteArray());   
+            final PDImageXObject imgNew;
+            if(tiff)
+                imgNew = LosslessFactory.createFromImage(doc, img.getImage());
+            else
+                imgNew = JPEGFactory.createFromStream(doc, bais);
+            rList.put(xName, imgNew);
          }
-         rList.setXObjects(xObs);
      }
      
      // -- Main methods --
 
      /**
       * @param args the command line arguments: <br />
-      * <code>[&lt;input&gt; [&lt;output&gt;]] [-q &lt;quality&gt;] [-h | --headless]</code>
+      * <code>[&lt;input&gt; [&lt;output&gt;]] [-q &lt;quality&gt; | -t | --tiff] [-h | --headless]</code>
       */
      public static void main(String[] args) {
          ShrinkPDF shrinker = new ShrinkPDF();
@@ -311,6 +334,8 @@ public final class ShrinkPDF {
                      state = 3; //compQual
                  else if(arg.equals("-h") || arg.equals("--headless"))
                      shrinker.setHeadless(true);
+                 else if(arg.equals("-t") || arg.equals("--tiff"))
+                     shrinker.setTiff(true);
                  else {
                      System.out.println("Unrecognized command flag: " + arg);
                      return;
