@@ -8,6 +8,11 @@ Project site: <http://b.nanes.org/shrink-pdf.html>
 Release notes
 -------------
 
+### beta-4
+
+- Update to use PDFBox version 2.0.16
+- Fix security vulnerability
+
 ### beta-3
 
 - Support for larger PDF documents
