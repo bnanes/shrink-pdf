@@ -1,5 +1,6 @@
 package edu.emory.cellbio;
 
+import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -40,6 +41,7 @@ public final class ShrinkPDF {
      private static float compQualDefault = 0.85f;
      private boolean headless = false;
      private boolean tiff = false;
+     private JFileChooser jfc = new JFileChooser();
      
      // -- Methods --
      
@@ -159,7 +161,6 @@ public final class ShrinkPDF {
      private void selectInputUI() throws ShrinkerException {
         input = null;
         while(input == null) {
-            JFileChooser jfc = new JFileChooser();
             jfc.setDialogType(JFileChooser.OPEN_DIALOG);
             jfc.setDialogTitle("Select PDF to shrink...");
             if(jfc.showOpenDialog(null) != JFileChooser.APPROVE_OPTION)
@@ -208,7 +209,6 @@ public final class ShrinkPDF {
      private void selectOutputUI() throws ShrinkerException {
          output = null;
          while(output == null) {
-            JFileChooser jfc = new JFileChooser();
             jfc.setDialogType(JFileChooser.SAVE_DIALOG);
             jfc.setDialogTitle("Select destination for shrunken PDF...");
             if(jfc.showSaveDialog(null) != JFileChooser.APPROVE_OPTION)
@@ -282,8 +282,16 @@ public final class ShrinkPDF {
             System.out.println("Compressing image: " + xName.getName());
             final ByteArrayOutputStream baos = new ByteArrayOutputStream();
             imgWriter.setOutput(ImageIO.createImageOutputStream(baos));
-            imgWriter.write(null,
-                    new IIOImage(img.getImage(), null, null), iwp);
+            BufferedImage bi = img.getImage();
+            IIOImage iioi;
+            if(bi.getTransparency() == BufferedImage.OPAQUE) {
+                iioi = new IIOImage(bi, null, null);  
+            } else if(bi.getTransparency() == BufferedImage.TRANSLUCENT) {                
+                iioi = new IIOImage(img.getOpaqueImage(), null, null);
+            } else {
+                iioi = new IIOImage(img.getOpaqueImage(), null, null); 
+            }
+            imgWriter.write(null, iioi, iwp);
             final ByteArrayInputStream bais = 
                     new ByteArrayInputStream(baos.toByteArray());   
             final PDImageXObject imgNew;

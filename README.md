@@ -8,6 +8,10 @@ Project site: <http://b.nanes.org/shrink-pdf.html>
 Release notes
 -------------
 
+### beta-5
+
+- Remove transparency before encoding jpeg images
+
 ### beta-4
 
 - Update to use PDFBox version 2.0.16
