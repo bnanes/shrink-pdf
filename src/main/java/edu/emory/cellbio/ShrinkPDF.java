@@ -264,6 +264,53 @@ public final class ShrinkPDF {
           }
           return doc;
      }
+    
+     /**
+      * Shrink a PDF by getting input
+      * @param compQual Compression quality parameter. 0 is
+      *                 smallest file, 1 is highest quality.
+      * @return The compressed {@code PDDocument}
+      * @throws FileNotFoundException
+      * @throws IOException 
+      */
+     private PDDocument shrinkMeV2(byte[] input) 
+             throws FileNotFoundException,IOException {
+          if(compQual < 0)
+              compQual = compQualDefault;
+          final PDDocument doc = PDDocument.load(input);
+          final PDPageTree pages = doc.getPages();
+          final ImageWriter imgWriter;
+          final ImageWriteParam iwp;
+          if(tiff) {
+              final Iterator<ImageWriter> tiffWriters =
+                    ImageIO.getImageWritersBySuffix("png");
+              imgWriter = tiffWriters.next();
+              iwp = imgWriter.getDefaultWriteParam();
+              //iwp.setCompressionMode(ImageWriteParam.MODE_DISABLED);
+          } else {
+              final Iterator<ImageWriter> jpgWriters = 
+                    ImageIO.getImageWritersByFormatName("jpeg");
+              imgWriter = jpgWriters.next();
+              iwp = imgWriter.getDefaultWriteParam();
+              iwp.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+              iwp.setCompressionQuality(compQual);
+          }
+          for(PDPage p : pages) {
+               scanResources(p.getResources(), doc, imgWriter, iwp);
+          }
+          return doc;
+     }
+    
+    public byte[] compressPDF(byte[] input) throws Exception {
+    	 try {
+    		 ByteArrayOutputStream baos = new ByteArrayOutputStream();
+             final PDDocument doc = shrinkMeV2(input);
+             doc.save(baos);
+             return baos.toByteArray();
+        } catch(Exception e) {
+             throw e;
+        }
+     }
      
      private void scanResources(
            final PDResources rList,
