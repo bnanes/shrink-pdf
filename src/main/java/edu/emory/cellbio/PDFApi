@@ -1,0 +1,26 @@
+package edu.emory.cellbio;
+
+
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
+public class PDFApi {
+	public static void main(String args[]) {
+		ShrinkPDF pdf = new ShrinkPDF();
+		try {
+			 String currentPath = new java.io.File(".").getCanonicalPath();
+			 System.out.println("Current dir:" + currentPath);
+
+			File file = new File(currentPath+"/src/main/resources/test1.pdf");
+			// ...(file is initialised)...
+			byte[] fileContent = Files.readAllBytes(file.toPath());
+			byte[] output = pdf.compressPDF(fileContent);
+			Path path = Paths.get(currentPath+"/src/main/resources/op.pdf");
+			Files.write(path, output);
+		}catch(Exception e) {
+			System.out.println(e);
+		}
+	}
+}
