@@ -20,8 +20,17 @@
                <directory>${project.basedir}/src/main/assembly</directory>
                <outputDirectory>/</outputDirectory>
                <includes>
-                  <include>shrink-pdf.*</include>
+                  <include>shrink-pdf.bat</include>
                </includes>
+          </fileSet>
+          <fileSet>
+               <directory>${project.basedir}/src/main/assembly</directory>
+               <outputDirectory>/</outputDirectory>
+               <includes>
+                  <include>shrink-pdf.sh</include>
+               </includes>
+               <lineEnding>unix</lineEnding>
+               <fileMode>0755</fileMode>
           </fileSet>
           <fileSet>
               <directory>${project.basedir}</directory>
