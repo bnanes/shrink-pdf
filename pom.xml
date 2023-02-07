@@ -8,7 +8,6 @@
   <packaging>jar</packaging>
 
   <name>The PDF Shrinker</name>
-  
   <developers>
      <developer>
           <name>Benjamin Nanes</name>

@@ -8,6 +8,12 @@ Project site: <http://b.nanes.org/shrink-pdf.html>
 Release notes
 -------------
 
+### beta-6
+
+- Update to JavaSE 8
+- Set executable permissions for the shell script launcher
+- Update to use the latest PDFBox version
+
 ### beta-5
 
 - Remove transparency before encoding jpeg images
